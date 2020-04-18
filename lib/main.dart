@@ -4,10 +4,9 @@ import 'package:event_app/edit.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
-
-// final Map<DateTime, List> _holidays = {
-//   DateTime(2020,1,1):['賀正'],
-// };
+import 'package:flutter_calendar_carousel/classes/event.dart';
+import 'package:flutter_calendar_carousel/flutter_calendar_carousel.dart'
+    show EventList;
 
 void main() {
   initializeDateFormatting().then((_) => runApp(MyApp()));
@@ -21,18 +20,37 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primaryColor: Colors.blue,
       ),
-      home: EventList(),
+      // home: EventList(),
+      home: MyHomePage(title: 'カレンダー')
     );
   }
 }
+// class EventList extends StatefulWidget {
+//   @override
+//   MemoListState createState() => MemoListState();
+// }
+class MyHomePage extends StatefulWidget {
+  MyHomePage({Key key, this.title}) : super(key: key);
+  final String title;
 
-class MemoListState extends State<EventList> with TickerProviderStateMixin{
+  @override
+  // _MyHomePageState createState() => _MyHomePageState();
+  State<StatefulWidget> createState(){
+    return _MyHomePageState();
+  }
+}
+
+// class MemoListState extends State<EventList> with TickerProviderStateMixin{
+class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   var _eventList = new List<String>();
   var _currentIndex = -1;
   bool _loading = true;
   final _biggerFont = const TextStyle(fontSize: 18.0);
   AnimationController _animationController;
   CalendarController _calendarController;
+  DateTime _currentDate = DateTime.now();
+  EventList<Event> _tergetDateMap = EventList<Event>();
+  // Map<DateTime,List> _events;
 
   @override
   void initState() {
@@ -52,22 +70,6 @@ class MemoListState extends State<EventList> with TickerProviderStateMixin{
     _calendarController.dispose();
     super.dispose();
   }
-
-  // void _onDaySelected(DateTime day, List events) {
-  //   print('CALLBACK: _onDaySelected');
-  //   setState(() {
-  //     _selectedEvents = events;
-  //   });
-  // }
-
-  void _onVisibleDaysChanged(DateTime first, DateTime last, CalendarFormat format) {
-    print('CALLBACK: _onVisibleDaysChanged');
-  }
-
-  void _onCalendarCreated(DateTime first, DateTime last, CalendarFormat format) {
-    print('CALLBACK: _onCalendarCreated');
-  }
-
 
   @override
   Widget build(BuildContext context) {
@@ -124,12 +126,16 @@ class MemoListState extends State<EventList> with TickerProviderStateMixin{
           borderRadius: BorderRadius.circular(16.0),
         ),
       ),
-      // onDaySelected: _onDaySelected,
-      onVisibleDaysChanged: _onVisibleDaysChanged,
-      onCalendarCreated: _onCalendarCreated,
+      onDaySelected: onDaySelected,
     );
   }
 
+  void onDaySelected(DateTime date,List event){
+    _tergetDateMap.add(date, createEvent(date));
+  }
+  Event createEvent(DateTime date) {
+    _addEvent();
+  }
 
   void loadEventList() {
     SharedPreferences.getInstance().then((prefs) {
@@ -226,7 +232,3 @@ class MemoListState extends State<EventList> with TickerProviderStateMixin{
   }
 }
 
-class EventList extends StatefulWidget {
-  @override
-  MemoListState createState() => MemoListState();
-}
