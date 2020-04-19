@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:event_app/edit.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:event_app/edit.dart';
+import 'package:flutter_calendar_carousel/flutter_calendar_carousel.dart'
+    show CalendarCarousel;
+import 'package:flutter_calendar_carousel/classes/event.dart';
+import 'package:flutter_calendar_carousel/classes/event_list.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:flutter_calendar_carousel/classes/event.dart';
-import 'package:flutter_calendar_carousel/flutter_calendar_carousel.dart'
-    show EventList;
+
 
 void main() {
   initializeDateFormatting().then((_) => runApp(MyApp()));
@@ -21,27 +23,23 @@ class MyApp extends StatelessWidget {
         primaryColor: Colors.blue,
       ),
       // home: EventList(),
-      home: MyHomePage(title: 'カレンダー')
+      home: CalendarExample(title: 'カレンダー')
     );
   }
 }
-// class EventList extends StatefulWidget {
-//   @override
-//   MemoListState createState() => MemoListState();
-// }
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+
+class CalendarExample extends StatefulWidget {
+  CalendarExample({Key key, this.title}) : super(key: key);
   final String title;
 
   @override
-  // _MyHomePageState createState() => _MyHomePageState();
   State<StatefulWidget> createState(){
-    return _MyHomePageState();
+    return _CalendarState();
   }
 }
 
-// class MemoListState extends State<EventList> with TickerProviderStateMixin{
-class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
+///////////初期設定///////////
+class _CalendarState extends State<CalendarExample> with TickerProviderStateMixin{
   var _eventList = new List<String>();
   var _currentIndex = -1;
   bool _loading = true;
@@ -49,8 +47,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   AnimationController _animationController;
   CalendarController _calendarController;
   DateTime _currentDate = DateTime.now();
-  EventList<Event> _tergetDateMap = EventList<Event>();
-  // Map<DateTime,List> _events;
+  EventList<Event> _markedDateMap = EventList<Event>();
 
   @override
   void initState() {
@@ -84,60 +81,82 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
-      ),
-      body: Column(
-        mainAxisSize: MainAxisSize.max,
-        children: <Widget>[
-          // Switch out 2 lines below to play with TableCalendar's settings
-          //-----------------------
-          _buildTableCalendar(),
-          // _buildTableCalendarWithBuilders(),
-          const SizedBox(height: 8.0),
-          // _buildButtons(),
-          const SizedBox(height: 8.0),
-           Expanded(child: _buildList()),
-        ],
-      ),
-      //_buildList(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addEvent,
-        tooltip: 'New Memo',
-        child: Icon(Icons.add),
-      ),
-    );
-  }
-
-  Widget _buildTableCalendar() {
-    return TableCalendar(
-      calendarController: _calendarController,
-      // events: _eventList,
-      // holidays: _holidays,
-      startingDayOfWeek: StartingDayOfWeek.monday,
-      calendarStyle: CalendarStyle(
-        selectedColor: Colors.deepOrange[400],
-        todayColor: Colors.deepOrange[200],
-        markersColor: Colors.brown[700],
-        outsideDaysVisible: false,
-      ),
-      headerStyle: HeaderStyle(
-        formatButtonTextStyle: TextStyle().copyWith(color: Colors.white, fontSize: 15.0),
-        formatButtonDecoration: BoxDecoration(
-          color: Colors.deepOrange[400],
-          borderRadius: BorderRadius.circular(16.0),
         ),
-      ),
-      onDaySelected: onDaySelected,
+        body: Column(
+          mainAxisSize: MainAxisSize.max,
+          children: <Widget>[
+            _buildCalendar(),
+            const SizedBox(height: 8.0),
+            const SizedBox(height: 8.0),
+            Expanded(child: _buildList()),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _addMemo,
+          tooltip: 'New Memo',
+          child: Icon(Icons.add),
+        ),
     );
   }
 
-  void onDaySelected(DateTime date,List event){
-    _tergetDateMap.add(date, createEvent(date));
-  }
-  Event createEvent(DateTime date) {
-    _addEvent();
+
+///////////カレンダー設定///////////
+  Widget _buildCalendar() {
+    return Container(
+        child: CalendarCarousel<Event>(
+          onDayPressed: onDayPressed,
+          weekendTextStyle: TextStyle(color: Colors.red),
+          thisMonthDayBorderColor: Colors.grey,
+          weekFormat: false,
+          height: 420.0,
+          selectedDateTime: _currentDate,
+          daysHaveCircularBorder: false,
+          customGridViewPhysics: NeverScrollableScrollPhysics(),
+          markedDatesMap: _markedDateMap,  // 追加
+          markedDateShowIcon: true,
+          markedDateIconMaxShown: 2,
+          todayTextStyle: TextStyle(
+            color: Colors.blue,
+          ),
+          markedDateIconBuilder: (event) {
+            return event.icon;
+          },
+          todayBorderColor: Colors.green,
+          markedDateMoreShowTotal: false),
+    );
   }
 
-  void loadEventList() {
+  void onDayPressed(DateTime date, List<Event> events) {
+    this.setState(() => _currentDate = DateTime.now());
+    addEvent(date);
+  }
+
+  void addEvent(DateTime date){
+    _markedDateMap.add(date, createEvent(date));
+  }
+
+  Event createEvent(DateTime date){
+    return Event(
+      date: date,
+      title: date.day.toString(),
+      icon: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.blue, width: 5),
+        ),
+        child: Icon(
+          Icons.calendar_today,
+          color: Colors.blue,
+        ),
+        // width: 10,
+        // height: 10,
+      )
+    );
+  }
+
+////////////メモ帳設定////////////////
+
+  void loadEventList(){
     SharedPreferences.getInstance().then((prefs) {
       const key = "event-list";
       if (prefs.containsKey(key)) {
@@ -149,7 +168,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     });
   }
 
-  void _addEvent() {
+  void _addMemo() {
     setState(() {
       _eventList.add("");
       _currentIndex = 0;
@@ -231,4 +250,3 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     );
   }
 }
-
