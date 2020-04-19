@@ -129,7 +129,19 @@ class _CalendarState extends State<CalendarExample> with TickerProviderStateMixi
   void onDayPressed(DateTime date, List<Event> events) {
     this.setState(() => _currentDate = DateTime.now());
     addEvent(date);
+    addMemo(date);
   }
+
+  // Widget _onDayPressed(DateTime date, List<Event> events) {
+  //   this.setState(() => _currentDate = DateTime.now());
+  //   return Scaffold(
+  //     floatingActionButton: FloatingActionButton(
+  //         onPressed: _addMemo,
+  //         tooltip: 'New Memo',
+  //         child: Icon(Icons.add),
+  //     ),
+  //   );
+  // }
 
   void addEvent(DateTime date){
     _markedDateMap.add(date, createEvent(date));
@@ -177,6 +189,19 @@ class _CalendarState extends State<CalendarExample> with TickerProviderStateMixi
         builder: (BuildContext context) {
           return new Edit(_eventList[_currentIndex], _onChanged);
         },
+      ));
+    });
+  }
+
+  void addMemo(DateTime date){
+    setState(() {
+      _eventList.add("");
+      _currentIndex = 0;
+      storeEventList();
+      Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (BuildContext context){
+          return new Edit2(_eventList[_currentIndex], _onChanged, date);
+        }
       ));
     });
   }
