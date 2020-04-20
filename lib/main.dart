@@ -41,7 +41,7 @@ class CalendarExample extends StatefulWidget {
 ///////////初期設定///////////
 class _CalendarState extends State<CalendarExample> with TickerProviderStateMixin{
   var _eventList = new List<String>();
-  var _currentIndex = -1;
+  var _currentIndex;
   bool _loading = true;
   final _biggerFont = const TextStyle(fontSize: 18.0);
   AnimationController _animationController;
@@ -53,6 +53,7 @@ class _CalendarState extends State<CalendarExample> with TickerProviderStateMixi
   void initState() {
     super.initState();
     this.loadEventList();
+    _currentIndex = -1;
     _calendarController = CalendarController();
     _animationController = AnimationController(
       vsync: this,
@@ -92,7 +93,7 @@ class _CalendarState extends State<CalendarExample> with TickerProviderStateMixi
           ],
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: _addMemo,
+          onPressed:_onButtonPresseed ,
           tooltip: 'New Memo',
           child: Icon(Icons.add),
         ),
@@ -108,7 +109,7 @@ class _CalendarState extends State<CalendarExample> with TickerProviderStateMixi
           weekendTextStyle: TextStyle(color: Colors.red),
           thisMonthDayBorderColor: Colors.grey,
           weekFormat: false,
-          height: 420.0,
+          height: 460.0,
           selectedDateTime: _currentDate,
           daysHaveCircularBorder: false,
           customGridViewPhysics: NeverScrollableScrollPhysics(),
@@ -121,27 +122,24 @@ class _CalendarState extends State<CalendarExample> with TickerProviderStateMixi
           markedDateIconBuilder: (event) {
             return event.icon;
           },
-          todayBorderColor: Colors.green,
+          todayBorderColor: Colors.green[30],
           markedDateMoreShowTotal: false),
     );
   }
 
   void onDayPressed(DateTime date, List<Event> events) {
     this.setState(() => _currentDate = DateTime.now());
+    _currentIndex ++;
     addEvent(date);
     addMemo(date);
   }
 
-  // Widget _onDayPressed(DateTime date, List<Event> events) {
-  //   this.setState(() => _currentDate = DateTime.now());
-  //   return Scaffold(
-  //     floatingActionButton: FloatingActionButton(
-  //         onPressed: _addMemo,
-  //         tooltip: 'New Memo',
-  //         child: Icon(Icons.add),
-  //     ),
-  //   );
-  // }
+  void _onButtonPresseed(){
+    this.setState(() => _currentDate = DateTime.now());
+    _currentIndex ++;
+    addEvent(_currentDate);
+    addMemo(_currentDate);
+  }
 
   void addEvent(DateTime date){
     _markedDateMap.add(date, createEvent(date));
@@ -180,23 +178,10 @@ class _CalendarState extends State<CalendarExample> with TickerProviderStateMixi
     });
   }
 
-  void _addMemo() {
-    setState(() {
-      _eventList.add("");
-      _currentIndex = 0;
-      storeEventList();
-      Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (BuildContext context) {
-          return new Edit(_eventList[_currentIndex], _onChanged);
-        },
-      ));
-    });
-  }
-
   void addMemo(DateTime date){
     setState(() {
       _eventList.add("");
-      _currentIndex = 0;
+      // _currentIndex = 0;
       storeEventList();
       Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (BuildContext context){
@@ -251,6 +236,7 @@ class _CalendarState extends State<CalendarExample> with TickerProviderStateMixi
         setState(() {
           _eventList.removeAt(index);
           storeEventList();
+          _currentIndex --;
         });
       },
       child: _buildRow(content, index),
@@ -260,7 +246,7 @@ class _CalendarState extends State<CalendarExample> with TickerProviderStateMixi
   Widget _buildRow(String content, int index) {
     return ListTile(
       title: Text(
-        content,
+        index.toString() + ":" + content,
         style: _biggerFont,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
