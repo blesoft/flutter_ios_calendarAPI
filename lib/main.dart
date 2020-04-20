@@ -41,19 +41,19 @@ class CalendarExample extends StatefulWidget {
 ///////////初期設定///////////
 class _CalendarState extends State<CalendarExample> with TickerProviderStateMixin{
   var _eventList = new List<String>();
-  var _currentIndex;
+  var _currentIndex = -1;
   bool _loading = true;
   final _biggerFont = const TextStyle(fontSize: 18.0);
   AnimationController _animationController;
   CalendarController _calendarController;
   DateTime _currentDate = DateTime.now();
   EventList<Event> _markedDateMap = EventList<Event>();
+  Map<DateTime, List> _eventMap = {DateTime(2020,1,1) : ['元旦']};//初期値として元旦を挿入
 
   @override
   void initState() {
     super.initState();
     this.loadEventList();
-    _currentIndex = -1;
     _calendarController = CalendarController();
     _animationController = AnimationController(
       vsync: this,
@@ -124,12 +124,18 @@ class _CalendarState extends State<CalendarExample> with TickerProviderStateMixi
           },
           todayBorderColor: Colors.green[30],
           markedDateMoreShowTotal: false),
+          
     );
   }
 
   void onDayPressed(DateTime date, List<Event> events) {
     this.setState(() => _currentDate = DateTime.now());
     _currentIndex ++;
+    // if (_currentIndex == 1) {
+    //   removeEvent(date);
+    // }
+    // else{addEvent(date);
+    // }
     addEvent(date);
     addMemo(date);
   }
@@ -143,6 +149,10 @@ class _CalendarState extends State<CalendarExample> with TickerProviderStateMixi
 
   void addEvent(DateTime date){
     _markedDateMap.add(date, createEvent(date));
+  }
+
+  void removeEvent(DateTime date){
+    _markedDateMap.remove(date, createEvent(date));
   }
 
   Event createEvent(DateTime date){
@@ -185,7 +195,8 @@ class _CalendarState extends State<CalendarExample> with TickerProviderStateMixi
       storeEventList();
       Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (BuildContext context){
-          return new Edit2(_eventList[_currentIndex], _onChanged, date);
+          // return new Edit2(_eventList[_currentIndex], _onChanged, date);
+          return new Edit3(_eventList[_currentIndex], _onChanged, date, _eventMap);
         }
       ));
     });
